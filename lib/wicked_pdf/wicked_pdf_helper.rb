@@ -118,6 +118,8 @@ module WickedPdfHelper
     end
 
     def read_from_uri(source)
+      puts source
+      puts asset_pathname(source)
       encoding = ':UTF-8' if RUBY_VERSION > '1.8'
       asset = open(asset_pathname(source), "r#{encoding}") { |f| f.read }
       asset = gzip(asset) if WickedPdf.config[:expect_gzipped_remote_assets]
