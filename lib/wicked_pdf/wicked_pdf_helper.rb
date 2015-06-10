@@ -18,40 +18,34 @@ module WickedPdfHelper
     css_text.respond_to?(:html_safe) ? css_text.html_safe : css_text
   end
 
-  def wicked_pdf_image_tag(img, options = {})
+  def wicked_pdf_image_tag(img, options={})
     image_tag "file:///#{WickedPdfHelper.root_path.join('public', 'images', img)}", options
   end
 
-  def wicked_pdf_javascript_src_tag(jsfile, options = {})
+  def wicked_pdf_javascript_src_tag(jsfile, options={})
     jsfile = WickedPdfHelper.add_extension(jsfile, 'js')
     src = "file:///#{WickedPdfHelper.root_path.join('public', 'javascripts', jsfile)}"
-    content_tag('script', '', { 'type' => Mime::JS, 'src' => path_to_javascript(src) }.merge(options))
+    content_tag("script", "", { "type" => Mime::JS, "src" => path_to_javascript(src) }.merge(options))
   end
 
   def wicked_pdf_javascript_include_tag(*sources)
-    js_text = sources.collect { |source| wicked_pdf_javascript_src_tag(source, {}) }.join("\n")
+    js_text = sources.collect{ |source| wicked_pdf_javascript_src_tag(source, {}) }.join("\n")
     js_text.respond_to?(:html_safe) ? js_text.html_safe : js_text
   end
 
   module Assets
-    ASSET_URL_REGEX = /url\(['"](.+)['"]\)(.+)/
-
     def wicked_pdf_stylesheet_link_tag(*sources)
-      stylesheet_contents = sources.collect do |source|
+      sources.collect { |source|
         source = WickedPdfHelper.add_extension(source, 'css')
         "<style type='text/css'>#{read_asset(source)}</style>"
-      end.join('\n')
-
-      stylesheet_contents.gsub(ASSET_URL_REGEX) do
-        "url(#{wicked_pdf_asset_path($1)})#{$2}"
-      end.html_safe
+      }.join("\n").html_safe
     end
 
-    def wicked_pdf_image_tag(img, options = {})
+    def wicked_pdf_image_tag(img, options={})
       image_tag wicked_pdf_asset_path(img), options
     end
 
-    def wicked_pdf_javascript_src_tag(jsfile, options = {})
+    def wicked_pdf_javascript_src_tag(jsfile, options={})
       jsfile = WickedPdfHelper.add_extension(jsfile, 'js')
       javascript_include_tag wicked_pdf_asset_path(jsfile), options
     end
@@ -77,12 +71,8 @@ module WickedPdfHelper
     URI_REGEXP = %r{^[-a-z]+://|^(?:cid|data):|^//}
 
     def asset_pathname(source)
-      puts source
       if precompiled_asset?(source)
-        puts asset_path(source)
-        puts set_protocol(asset_path(source))
         if (pathname = set_protocol(asset_path(source))) =~ URI_REGEXP
-          puts pathname
           # asset_path returns an absolute URL using asset_host if asset_host is set
           pathname
         else
@@ -93,16 +83,11 @@ module WickedPdfHelper
       end
     end
 
-    # will prepend a http or default_protocol to a protocol relative URL
-    # or when no protcol is set.
+    #will prepend a http or default_protocol to a protocol realtive URL
     def set_protocol(source)
-      protocol = WickedPdf.config[:default_protocol] || 'http'
-      if source[0, 2] == '//'
-        source = [protocol, ':', source].join
-      elsif !source[0, 8].include?('://')
-        source = [protocol, '://', source].join
-      end
-      source
+      protocol = WickedPdf.config[:default_protocol] || "http"
+      source = [protocol, ":", source].join if source[0,2] == "//"
+      return source
     end
 
     def precompiled_asset?(source)
@@ -123,7 +108,7 @@ module WickedPdfHelper
 
     def read_from_uri(source)
       encoding = ':UTF-8' if RUBY_VERSION > '1.8'
-      asset = open(asset_pathname(source), "r#{encoding}") { |f| f.read }
+      asset = open(asset_pathname(source), "r#{encoding}") {|f| f.read }
       asset = gzip(asset) if WickedPdf.config[:expect_gzipped_remote_assets]
       asset
     end
